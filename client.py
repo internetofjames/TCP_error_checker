@@ -12,9 +12,10 @@ def setup_argparser(parser):
     # change required to true when socket connection function is project-ready
     parser.add_argument('-p', '--port', type=int, required=False, help='Usage: -p or --port <portNumber>')
     parser.add_argument('-b', '--bits', type=int, required=True, help='Usage: -b or --bits <numberOfBits>')
-    parser.add_argument('-t', '--type', type=str, required=False, help='Usage: -t or --type <typeOfErrorCheck>')
-    # can delete --function arg if we decide to not let the user specify the crc polynomial
-    parser.add_argument('-f', '--function', type=bin, required=False, help='Usage: -f or --polynomialFunction <crcPolynomial>')
+    parser.add_argument('-t', '--type',
+                        type=str, nargs=2, required=False,
+                        help='Usage: -t or --type <typeOfErrorCheck> <option>'
+                        ) # type flag accepts two arguments, the name of the error check and a schema (i.e. parity1d even)
     args = parser.parse_args()
     return args
 
@@ -25,17 +26,39 @@ def generate_message(num_bits):
 
 
 # pass the message to the appropriate error checking function
-def generate_error_code():
+def generate_error_code(message):
 
+    if args.type[0] == 'parity1d':
+        error_code = parity_1D(message)
     # call error checking function (i.e. parity_1D) depending on argparser value
     # these functions return the appropriate binary error code, which this function will return
-    # return error_code
-    pass
+    return error_code
 
 
 # 1D parity check
-def parity_1D():
-    pass
+def parity_1D(message):
+
+    # initialize the count of 1's
+    parity_count = 0
+    # iterate through the message one bit at a time, and increment the parity_count every time a 1 is encountered
+    for bit in bin(message):
+        if bit == 1:
+            parity_count += 1
+
+    # compute the parity bit based on the parity schema
+    if args.type[1] == 'even':
+        if parity_count % 2 == 1:  # parity_count is odd
+            error_code = 1
+        else:
+            error_code = 0
+
+    elif args.type[1] == 'odd':
+        if parity_count % 2 == 1:  # parity_count is odd
+            error_code = 0
+        else:
+            error_code = 1
+
+    return error_code
 
 
 # 2D parity check
@@ -66,7 +89,8 @@ def pretty_print_message(message, error_code):
     error_code_string = ' '.join([error_code_string[n:n + 8] for n in range(0, len(error_code_string), 8)])
 
     # some formatting for a nice print out of the message
-    print('\nMessage {0:{1}}| Error Code'.format('', (len(message_string) - len('Message'))))
+    print('\n{} {}'.format(args.type[0], args.type[1]))
+    print('\nMessage {0:{1}}| Error Code'.format('', (abs(len(message_string) - len('Message')))))
     print('{0:->{1}}{2:-<{1}}'.format('|', (len(message_string) + 2), ''))
     print('{0} | {1}'.format(message_string, error_code_string))
 
@@ -81,5 +105,6 @@ if __name__ == '__main__':
 
 
     message = generate_message(args.bits)
-    pretty_print_message(message, 12)
+    error_code = generate_error_code(message)
+    pretty_print_message(message, error_code)
 
