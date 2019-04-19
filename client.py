@@ -1,4 +1,3 @@
-# client.py
 """
     I'm thinking the client should be ran a single instance at a time, exiting and closing the socket after sending message and receiving validation or not
 """
@@ -283,4 +282,3 @@ if __name__ == '__main__':
     print_message(new_message)
 
     # pretty_print_message(message, error_code)
-
