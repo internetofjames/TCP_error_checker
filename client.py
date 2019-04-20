@@ -208,6 +208,11 @@ def crc(message):
             if len(remainder) <= len(zeros):
                 stop_condition = True
 
+        # if the remainder has leading 0's, python automatically omits those, so we need to re-prepend them to the crc code
+        if len(remainder) < len(zeros):
+            leading_zeros = '0' * (len(zeros) - len(remainder))
+            remainder = leading_zeros + remainder
+
         # append the remainder to the message
         message += remainder
         print(remainder)
@@ -296,5 +301,7 @@ if __name__ == '__main__':
     message = generate_message(args.bits)
     new_message = error_check(message)
     print_message(new_message)
+
+    # crc(int('11010111', 2))
 
     # pretty_print_message(message, error_code)
