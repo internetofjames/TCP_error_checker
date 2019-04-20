@@ -8,14 +8,12 @@
 import socket, sys
 from random import *
 
-# an enum might be a good structure to do a "switch" statement (doesn't technically exist in python, so if-elif-else)
-# feel free to implement whatever you prefer if an enum is too complicated
-from enum import Enum
 
-
-def create_socket():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+ip_address = 'localhost'
+port = 9088
+server.bind((ip_address, port))
 
 
 def make_switch(message, size):
@@ -31,6 +29,7 @@ def make_switch(message, size):
 
 # define the different error checking functions here
 def parity_1D(message, arg):
+    segmented_message = segment(message)
     # initialize a list that will contain the parity bit for each segment
     parity_bit_list = []
     # iterate through each segment
@@ -69,6 +68,7 @@ def parity_1D(message, arg):
 
 # 2D parity check
 def parity_2D(message, arg):
+    segmented_message = segment(message)
     row_parity_bit_list = []
 
     # iterate through each segment
@@ -105,7 +105,7 @@ def parity_2D(message, arg):
     # create a list containing representations of each column of bits for the column check
     columns = [''.join(b) for b in zip(*segmented_message)]
 
-    # initiallize a string to store these bits since it will just be appended to the end of the segmented message
+    # initialize a string to store these bits since it will just be appended to the end of the segmented message
     column_parity_bits = ''
 
     # perform the parity check on the columns
@@ -144,13 +144,56 @@ def parity_2D(message, arg):
 
 # cyclic redundancy check
 def crc(message, arg):
-    # need to figure out a way to pass in the polynomial if the user is going to specify that
-    # otherwise we can just use a default one
-    pass
+    message = '{0:b}'.format(message)
+
+    try:
+        divisor = int(arg, 2)  # will throw a ValueError if args.type[1] is not a binary string
+
+        # add polynomial length - 1 zeros to the end of message
+        zeros = '0' * (len(arg) - 1)
+        temp_message = message + zeros
+
+        # because of how python represents binary, we can pad our divisor with trailing zeros for division
+        divisor = '{0:b}'.format(divisor)
+        divisor_padding = '0' * (len(temp_message) - len(divisor))
+        divisor += divisor_padding
+
+        # convert message and divisor to numbers for XOR division
+        temp_message = int(temp_message, 2)
+        divisor = int(divisor, 2)
+
+        # perform the crc, using the length of the message padding (zeros) as the stopping condition for dividing
+        stop_condition = False
+        remainder = ''
+        while not stop_condition:
+            # shift the divisor to shorten it to the length of the message if it has changed
+            shift_amount = len('{0:b}'.format(divisor)) - len('{0:b}'.format(temp_message))
+            if shift_amount > 0:
+                divisor = divisor >> shift_amount
+
+            temp_message = temp_message ^ divisor
+            remainder = '{0:b}'.format(temp_message)
+            if len(remainder) <= len(zeros):
+                stop_condition = True
+
+        # if the remainder has leading 0's, python automatically omits those, so we need to re-prepend them to the crc code
+        if len(remainder) < len(zeros):
+            leading_zeros = '0' * (len(zeros) - len(remainder))
+            remainder = leading_zeros + remainder
+
+        # append the remainder to the message
+        message += remainder
+        print(remainder)
+
+    except ValueError:
+        sys.exit('\nTYPE PARITY1D ERROR: Invalid arg. Supply arg with valid binary polynomial (e.g. 1011)')
+
+    return message
 
 
 # checksum, perhaps summing the message in 8-bit pieces?
-def checksum(message, arg):
+def checksum(message):
+    segmented_message = segment(message)
     # if the message is only one segment long, just flip it
     if len(segmented_message) < 2:
         checksum = ones_complement(segmented_message[0])
@@ -192,11 +235,11 @@ def ones_complement(binary_string):
 # send a message to the client if the message was received correctly
 
 
-def compare_messages(received_message, error_checked_message):
-    if received_message == error_checked_message:
-        print("Message was received correctly. Message is " + error_checked_message)
+def compare_messages(received_message, checked_message):
+    if received_message == checked_message:
+        print("Message was received correctly. Message is " + checked_message)
     else:
-        print("Message receiving failed. Messaged received is " + error_checked_message)
+        print("Message receiving failed. Messaged received is " + checked_message)
 
 
 # break up the message into a list of 8 bit binary string segments for processing
@@ -209,41 +252,30 @@ def segment(message):
 
 if __name__ == '__main__':
     # write the loop and order of program execution here
-    what_loop = 1
     while True:
         try:
+            conn, addr = server.accept()
             sent = conn.recv(2048).split(", ")
             message = sent[0].bin()
-            segmented_message = segment(message)
             error_type = sent[1]
             arg2 = sent[2]
             print(message)
             size = message.length
-
             error_message = make_switch(message, size)
-            if error_type == "1d parity":
+            if error_type == "parity1d":
                 error_checked_message = parity_1D(error_message, arg2)
                 compare_messages(message, error_checked_message)
-            elif error_type == "2d parity":
+            elif error_type == "parity2d":
                 error_checked_message = parity_2D(message, arg2)
                 compare_messages(message, error_checked_message)
             elif error_type == "crc":
                 error_checked_message = crc(message, arg2)
                 compare_messages(message, error_checked_message)
             else:
-                error_checked_message = checksum(message, arg2)
+                error_checked_message = checksum(message)
                 compare_messages(message, error_checked_message)
-
-            error_checked_message = make_switch(message, size)
-            if error_type == "1d parity":
-                parity_1D(message)
-            elif error_type == "2d parity":
-                parity_2D(message)
-            elif error_type == "crc":
-                crc(message)
-            else:
-                checksum(message)
-            compare_messages(message, error_checked_message)
-
         except:
             continue
+
+conn.close()
+server.close()

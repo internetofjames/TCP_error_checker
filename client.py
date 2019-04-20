@@ -340,7 +340,7 @@ if __name__ == '__main__':
     print_message(segmented_data)
 
     # create socket and connect to server
-    server_connection = server_connect(args.port)
+    server_connection = server_connect(int(args.port))
 
     # prepare message to be sent to server
     message = prepare_message(segmented_data)
