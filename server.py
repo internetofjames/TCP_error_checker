@@ -30,7 +30,7 @@ def make_switch(message, size):
 
 
 # define the different error checking functions here
-def parity_1D(message):
+def parity_1D(message, arg):
     # initialize a list that will contain the parity bit for each segment
     parity_bit_list = []
     # iterate through each segment
@@ -43,13 +43,13 @@ def parity_1D(message):
                 parity_count += 1
 
         # compute the parity bit based on the parity schema
-        if args.type[1] == 'even':
+        if arg == 'even':
             if parity_count % 2 == 1:  # parity_count is odd
                 parity_bit = 1
             else:
                 parity_bit = 0
 
-        elif args.type[1] == 'odd':
+        elif arg == 'odd':
             if parity_count % 2 == 1:  # parity_count is odd
                 parity_bit = 0
             else:
@@ -68,7 +68,7 @@ def parity_1D(message):
 
 
 # 2D parity check
-def parity_2D(message):
+def parity_2D(message, arg):
     row_parity_bit_list = []
 
     # iterate through each segment
@@ -81,13 +81,13 @@ def parity_2D(message):
                 parity_count += 1
 
         # compute the parity bit based on the parity schema
-        if args.type[1] == 'even':
+        if arg == 'even':
             if parity_count % 2 == 1:  # parity_count is odd
                 parity_bit = 1
             else:
                 parity_bit = 0
 
-        elif args.type[1] == 'odd':
+        elif arg == 'odd':
             if parity_count % 2 == 1:  # parity_count is odd
                 parity_bit = 0
             else:
@@ -118,13 +118,13 @@ def parity_2D(message):
                 parity_count += 1
 
         # compute the parity bit based on the parity schema
-        if args.type[1] == 'even':
+        if arg == 'even':
             if parity_count % 2 == 1:  # parity_count is odd
                 parity_bit = 1
             else:
                 parity_bit = 0
 
-        elif args.type[1] == 'odd':
+        elif arg == 'odd':
             if parity_count % 2 == 1:  # parity_count is odd
                 parity_bit = 0
             else:
@@ -143,14 +143,14 @@ def parity_2D(message):
 
 
 # cyclic redundancy check
-def crc(message):
+def crc(message, arg):
     # need to figure out a way to pass in the polynomial if the user is going to specify that
     # otherwise we can just use a default one
     pass
 
 
 # checksum, perhaps summing the message in 8-bit pieces?
-def checksum(message):
+def checksum(message, arg):
     # if the message is only one segment long, just flip it
     if len(segmented_message) < 2:
         checksum = ones_complement(segmented_message[0])
@@ -213,24 +213,25 @@ if __name__ == '__main__':
     while True:
         try:
             sent = conn.recv(2048).split(", ")
-            message = sent[1].bin()
+            message = sent[0].bin()
             segmented_message = segment(message)
-            error_type = sent[2]
+            error_type = sent[1]
+            arg2 = sent[2]
             print(message)
             size = message.length
 
             error_message = make_switch(message, size)
             if error_type == "1d parity":
-                error_checked_message = parity_1D(error_message)
+                error_checked_message = parity_1D(error_message, arg2)
                 compare_messages(message, error_checked_message)
             elif error_type == "2d parity":
-                error_checked_message = parity_2D(message)
+                error_checked_message = parity_2D(message, arg2)
                 compare_messages(message, error_checked_message)
             elif error_type == "crc":
-                error_checked_message = crc(message)
+                error_checked_message = crc(message, arg2)
                 compare_messages(message, error_checked_message)
             else:
-                error_checked_message = checksum(message)
+                error_checked_message = checksum(message, arg2)
                 compare_messages(message, error_checked_message)
 
             error_checked_message = make_switch(message, size)
