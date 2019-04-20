@@ -44,6 +44,7 @@ def error_check(message):
 
     elif args.type[0] == 'crc':
         error_checked_message = crc(message)
+        error_checked_message = segment(int(error_checked_message, 2))
 
     elif args.type[0] == 'checksum':
         error_checked_message = checksum(segmented_message)
@@ -280,6 +281,8 @@ def ones_complement(binary_string):
 def print_message(segmented_message):
     # process the message and error_code ints as binary numbers (without the 0b prefix) and convert to a string,
     # spaced by every 8 bits
+    message = ''.join([n for n in segmented_message])
+    segmented_message = segment(int(message, 2))
     message_string = ' '.join([n for n in segmented_message])
 
     # some formatting for a nice print out of the message
@@ -292,16 +295,56 @@ def print_message(segmented_message):
 """ Server communication functions """
 # implement functions for connecting to, sending data, and receiving data from the server here
 
+# connect to the socket that the server is running on
+def server_connect(port):
+    server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    connection = ('localhost', port)
+    try:
+        print('Connecting to server %s on port %s...' % connection)
+        server_connection.connect()
+    except:
+        print('Connection failed, exiting...')
+        server_connection.close()
+        sys.exit()
+
+    return server_connection
+
+
+# concatenate the message to be sent to the server
+# message format is: '<data>,<typeArg1>,<typeArg2>'
+def prepare_message(segmented_data):
+    data_string = ''.join([n for n in segmented_data])
+    message = '{},{},{}'.format(data_string, args.type[0], args.type[1])
+    return message
+
+
+# send message to server
+def send_message(connection, message):
+    print('Sending message to %s' % connection.getpeername())
+    connection.send(message.encode('utf-8'))
+
+
+# receive server reply
+def receive_reply(connection):
+    reply = connection.recv(2048).decode('utf-8')
+    return reply
+
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     args = setup_argparser(parser)
 
-    message = generate_message(args.bits)
-    new_message = error_check(message)
-    print_message(new_message)
+    data = generate_message(args.bits)
+    segmented_data = error_check(data)
+    print_message(segmented_data)
 
-    # crc(int('11010111', 2))
+    # create socket and connect to server
+    server_connection = server_connect(args.port)
 
-    # pretty_print_message(message, error_code)
+    # prepare message to be sent to server
+    message = prepare_message(segmented_data)
+
+    # send message to server and receive reply
+    send_message(server_connection, message)
+    reply = receive_reply(server_connection)
