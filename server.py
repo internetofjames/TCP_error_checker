@@ -219,6 +219,7 @@ if __name__ == '__main__':
             arg2 = sent[2]
             print(message)
             size = message.length
+
             error_message = make_switch(message, size)
             if error_type == "1d parity":
                 error_checked_message = parity_1D(error_message, arg2)
@@ -232,6 +233,17 @@ if __name__ == '__main__':
             else:
                 error_checked_message = checksum(message, arg2)
                 compare_messages(message, error_checked_message)
+
+            error_checked_message = make_switch(message, size)
+            if error_type == "1d parity":
+                parity_1D(message)
+            elif error_type == "2d parity":
+                parity_2D(message)
+            elif error_type == "crc":
+                crc(message)
+            else:
+                checksum(message)
+            compare_messages(message, error_checked_message)
 
         except:
             continue
