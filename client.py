@@ -185,21 +185,42 @@ def crc(message):
         zeros = '0' * (len(args.type[1]) - 1)
         temp_message = message + zeros
 
-        # divide through the message
-        remainder = temp_message[0:len(args.type[1])]
-        for bit in range(len(args.type[1]), len(message)):
-            remainder = int(remainder, 2) ^ divisor
-            remainder = '{0:b}'.format(remainder)
+        # because of how python represents binary, we can pad our divisor with trailing zeros for division
+        divisor = '{0:b}'.format(divisor)
+        divisor_padding = '0' * (len(temp_message) - len(divisor))
+        divisor += divisor_padding
 
-            # add the next bit to the current remainder
-            remainder += temp_message[bit]
+        # convert message and divisor to numbers for XOR division
+        temp_message = int(temp_message, 2)
+        divisor = int(divisor, 2)
 
+        # perform the crc, using the length of the message padding (zeros) as the stopping condition for dividing
+        stop_condition = False
+        remainder = ''
+        while not stop_condition:
+            # shift the divisor to shorten it to the length of the message if it has changed
+            shift_amount = len('{0:b}'.format(divisor)) - len('{0:b}'.format(temp_message))
+            if shift_amount > 0:
+                divisor = divisor >> shift_amount
+
+            temp_message = temp_message ^ divisor
+            remainder = '{0:b}'.format(temp_message)
+            if len(remainder) <= len(zeros):
+                stop_condition = True
+
+        # if the remainder has leading 0's, python automatically omits those, so we need to re-prepend them to the crc code
+        if len(remainder) < len(zeros):
+            leading_zeros = '0' * (len(zeros) - len(remainder))
+            remainder = leading_zeros + remainder
+
+        # append the remainder to the message
         message += remainder
+        print(remainder)
 
     except ValueError:
         sys.exit('\nTYPE PARITY1D ERROR: Invalid arg. Supply arg with valid binary polynomial (e.g. 1011)')
 
-    return remainder
+    return message
 
 
 # checksum using 8 bit segments
@@ -280,5 +301,7 @@ if __name__ == '__main__':
     message = generate_message(args.bits)
     new_message = error_check(message)
     print_message(new_message)
+
+    # crc(int('11010111', 2))
 
     # pretty_print_message(message, error_code)
