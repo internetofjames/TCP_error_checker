@@ -9,7 +9,7 @@ import sys, argparse
 # function sets up the argparser arguments for the program
 def setup_argparser(parser):
     # change required to true when socket connection function is project-ready
-    parser.add_argument('-p', '--port', type=int, required=False, help='Usage: -p or --port <portNumber>')
+    parser.add_argument('-p', '--port', type=int, required=True, help='Usage: -p or --port <portNumber>')
     parser.add_argument('-b', '--bits', type=int, required=True, help='Usage: -b or --bits <numberOfBits>')
     parser.add_argument('-t', '--type',
                         type=str, nargs=2, required=True,
@@ -301,7 +301,7 @@ def server_connect(port):
     connection = ('localhost', port)
     try:
         print('Connecting to server %s on port %s...' % connection)
-        server_connection.connect()
+        server_connection.connect(connectiona)
     except:
         print('Connection failed, exiting...')
         server_connection.close()
