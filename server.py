@@ -17,20 +17,20 @@ def setup_optparser(parser):
     options, args = parser.parse_args()
     return options
 
+
 def make_switch(message, size):
-    random_int = random()
-    bit_num = random(1, size)
+    random_int = random.random()
+    bit_num = random.randint(1, size)
     if random_int < 0.5:
-        if message[bit_num] == '1':
             message[bit_num] = '0'
-        else:
-            message[bit_num] = '1'
+            print("Bit" + bit_num + " was flipped.")
+    else:
+        print("No bits were flipped.")
     return message
 
 
 # define the different error checking functions here
-def parity_1D(message, arg):
-    segmented_message = segment(message)
+def parity_1D(segmented_message, arg):
     # initialize a list that will contain the parity bit for each segment
     parity_bit_list = []
     # iterate through each segment
@@ -68,8 +68,7 @@ def parity_1D(message, arg):
 
 
 # 2D parity check
-def parity_2D(message, arg):
-    segmented_message = segment(message)
+def parity_2D(segmented_message, arg):
     row_parity_bit_list = []
 
     # iterate through each segment
@@ -193,8 +192,7 @@ def crc(message, arg):
 
 
 # checksum, perhaps summing the message in 8-bit pieces?
-def checksum(message):
-    segmented_message = segment(message)
+def checksum(segmented_message):
     # if the message is only one segment long, just flip it
     if len(segmented_message) < 2:
         checksum = ones_complement(segmented_message[0])
@@ -238,16 +236,16 @@ def ones_complement(binary_string):
 
 def compare_messages(received_message, checked_message):
     if received_message == checked_message:
-        print("Message was received correctly. Message is " + checked_message)
+        print("Message was received correctly. Message is " + str(checked_message))
     else:
-        print("Message receiving failed. Messaged received is " + checked_message)
+        print("Message receiving failed. Messaged received is " + str(checked_message))
 
 
 # break up the message into a list of 8 bit binary string segments for processing
 def segment(message):
     # create a list of 8 bit segments of the message, in order
     # we start the for loop at 2 to skip over the '0b' prefix that begins every binary string representation in python
-    segment_list = ([bin(message)[n:n + 8] for n in range(2, len(bin(message)), 8)])
+    segment_list = ([message[n:n + 8] for n in range(2, len(message), 8)])
     return segment_list
 
 
@@ -270,23 +268,23 @@ if __name__ == '__main__':
             received = received.decode('utf-8')
             received = received.split(',')
             message = received[0]
+            segmented_message = segment(message)
             error_type = received[1]
-            error_arg2 = received[2]
+            error_arg = received[2]
             print(message)
             size = message.__len__()
-            if options.flip:
-                message = make_switch(message, size)
+            message = make_switch(message, size)
             if error_type == "parity1d":
-                error_checked_message = parity_1D(message, error_arg2)
+                error_checked_message = parity_1D(segmented_message, error_arg)
                 compare_messages(message, error_checked_message)
             elif error_type == "parity2d":
-                error_checked_message = parity_2D(message, error_arg2)
+                error_checked_message = parity_2D(segmented_message, error_arg)
                 compare_messages(message, error_checked_message)
             elif error_type == "crc":
-                error_checked_message = crc(message, error_arg2)
+                error_checked_message = crc(message, error_arg)
                 compare_messages(message, error_checked_message)
             else:
-                error_checked_message = checksum(message)
+                error_checked_message = checksum(segmented_message)
                 compare_messages(message, error_checked_message)
         except KeyboardInterrupt:
             conn.close()
