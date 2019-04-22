@@ -291,6 +291,7 @@ def print_message(segmented_message):
     print('\nMessage')
     print('-' * len(message_string))
     print(message_string)
+    print()
 
 
 """ Server communication functions """

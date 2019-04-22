@@ -18,20 +18,36 @@ def setup_optparser(parser):
     return options
 
 
+# function to randomly flip a bit in the message
 def make_switch(message, size):
+    message_array = [c for c in message]  # python str type cannot have individual chars replaced through indexing, conversion to a list is necessary
     random_int = random.random()
     bit_num = random.randint(1, size)
     if random_int < 0.5:
-        if message[bit_num] == '1':
-            message[bit_num] = '0'
-            print("Bit" + bit_num + " was flipped.")
+
+        if message_array[bit_num] == '1':
+            message_array[bit_num] = '0'
+        else:
+            message_array[bit_num] = '1'
+
+        print("Bit", bit_num, "was flipped.")
+
     else:
         print("No bits were flipped.")
+
+    # convert back to string
+    message = ''.join([i for i in message_array])
+
     return message
 
 
 # define the different error checking functions here
 def parity_1D(segmented_message, arg):
+
+    # remove the parity bits from the received message for processing
+    for i, s in enumerate(segmented_message):
+        segmented_message[i] = s[0:(len(s) - 1)]
+
     # initialize a list that will contain the parity bit for each segment
     parity_bit_list = []
     # iterate through each segment
@@ -70,6 +86,14 @@ def parity_1D(segmented_message, arg):
 
 # 2D parity check
 def parity_2D(segmented_message, arg):
+
+    # remove the last segment of the message, which contains the column parity information
+    segmented_message = segmented_message[0:(len(segmented_message) - 1)]
+
+    # remove the parity bits from the rest of the message for processing
+    for i, s in enumerate(segmented_message):
+        segmented_message[i] = s[0:(len(s) - 1)]
+
     row_parity_bit_list = []
 
     # iterate through each segment
@@ -237,17 +261,23 @@ def ones_complement(binary_string):
 
 def compare_messages(received_message, checked_message):
     if received_message == checked_message:
-        print("Message was received correctly. Message is " + str(checked_message))
+        status = "Message was received correctly. Message is " + str(checked_message)
     else:
-        print("Message receiving failed. Messaged received is " + str(checked_message))
+        status = "Message receiving failed. Messaged received is " + str(checked_message)
+    print(status)
+    return status
 
 
-# break up the message into a list of 8 bit binary string segments for processing
-def segment(message):
-    # create a list of 8 bit segments of the message, in order
-    # we start the for loop at 2 to skip over the '0b' prefix that begins every binary string representation in python
-    segment_list = ([message[n:n + 8] for n in range(2, len(message), 8)])
+# break up the message into a list of n-bit binary string segments for processing
+def segment(message, segment_size):
+    # create a list of segment_size bit segments of the message, in order
+    segment_list = ([message[n:n + segment_size] for n in range(0, len(message), segment_size)])
     return segment_list
+
+# reassemble message segments into continuous string
+def unsegment(segmented_message):
+    message = ''.join([n for n in segmented_message])
+    return message
 
 
 if __name__ == '__main__':
@@ -264,29 +294,38 @@ if __name__ == '__main__':
     server.listen(1)
     while True:
         try:
+            print('\nAwaiting next message...')
             conn, addr = server.accept()
             received = conn.recv(2048)
             received = received.decode('utf-8')
+            print(received)
             received = received.split(',')
             message = received[0]
-            segmented_message = segment(message)
             error_type = received[1]
             error_arg = received[2]
             print(message)
             size = message.__len__()
             message = make_switch(message, size)
             if error_type == "parity1d":
+                segmented_message = segment(message, 9)  # parity1d works in 8-bit segments with a parity bit appended to the end, so 9 bits per segment
                 error_checked_message = parity_1D(segmented_message, error_arg)
-                compare_messages(message, error_checked_message)
+                error_checked_message = unsegment(error_checked_message)
+                reply = compare_messages(message, error_checked_message)
             elif error_type == "parity2d":
+                segmented_message = segment(message, 9)  # parity2d works in 8-bit segments with a parity bit appended to the end, including the 8-bit column parity segment, so 9 bits per segment
                 error_checked_message = parity_2D(segmented_message, error_arg)
-                compare_messages(message, error_checked_message)
+                error_checked_message = unsegment(error_checked_message)
+                reply = compare_messages(message, error_checked_message)
             elif error_type == "crc":
                 error_checked_message = crc(message, error_arg)
-                compare_messages(message, error_checked_message)
+                reply = compare_messages(message, error_checked_message)
             else:
                 error_checked_message = checksum(segmented_message)
-                compare_messages(message, error_checked_message)
+                error_checked_message = unsegment(error_checked_message)
+                reply = compare_messages(message, error_checked_message)
+
+            reply = reply.encode('utf-8')
+            conn.send(reply)
         except KeyboardInterrupt:
             conn.close()
             server.close()
