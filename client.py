@@ -291,6 +291,7 @@ def print_message(segmented_message):
     print('\nMessage')
     print('-' * len(message_string))
     print(message_string)
+    print()
 
 
 """ Server communication functions """
@@ -351,3 +352,4 @@ if __name__ == '__main__':
     # send message to server and receive reply
     send_message(server_connection, message)
     reply = receive_reply(server_connection)
+    print(reply)
