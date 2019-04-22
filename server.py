@@ -5,25 +5,26 @@
     own terminal window. After that all works, we can implement an argument that will enable a occasional bit flipping.
 """
 
-import socket, sys
-from random import *
+import socket, sys, random
+import optparse
 
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-ip_address = 'localhost'
-port = 9088
-server.bind((ip_address, port))
-
+# function sets up the OptionParser option for the program
+def setup_optparser(parser):
+    # change required to true when socket connection function is project-ready
+    parser.add_option('-f', '--flip', action='store_true',
+                        help='Usage: Include -f or --flip to enable potential flipping of received message bits')
+    options, args = parser.parse_args()
+    return options
 
 def make_switch(message, size):
     random_int = random()
     bit_num = random(1, size)
     if random_int < 0.5:
-        if message[bit_num] == 1:
-            message[bit_num] = 0
+        if message[bit_num] == '1':
+            message[bit_num] = '0'
         else:
-            message[bit_num] = 1
+            message[bit_num] = '1'
     return message
 
 
@@ -251,31 +252,46 @@ def segment(message):
 
 
 if __name__ == '__main__':
-    # write the loop and order of program execution here
+
+    parser = optparse.OptionParser()
+    options = setup_optparser(parser)
+    
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    ip_address = 'localhost'
+    port = 9088
+    server.bind((ip_address, port))
+    print('Now serving on port %s' % port)
+    server.listen(1)
     while True:
         try:
             conn, addr = server.accept()
-            sent = conn.recv(2048).split(", ")
-            message = sent[0].bin()
-            error_type = sent[1]
-            arg2 = sent[2]
+            received = conn.recv(2048)
+            received = received.decode('utf-8')
+            received = received.split(',')
+            message = received[0]
+            error_type = received[1]
+            error_arg2 = received[2]
             print(message)
-            size = message.length
-            error_message = make_switch(message, size)
+            size = message.__len__()
+            if options.flip:
+                message = make_switch(message, size)
             if error_type == "parity1d":
-                error_checked_message = parity_1D(error_message, arg2)
+                error_checked_message = parity_1D(message, error_arg2)
                 compare_messages(message, error_checked_message)
             elif error_type == "parity2d":
-                error_checked_message = parity_2D(message, arg2)
+                error_checked_message = parity_2D(message, error_arg2)
                 compare_messages(message, error_checked_message)
             elif error_type == "crc":
-                error_checked_message = crc(message, arg2)
+                error_checked_message = crc(message, error_arg2)
                 compare_messages(message, error_checked_message)
             else:
                 error_checked_message = checksum(message)
                 compare_messages(message, error_checked_message)
-        except:
-            continue
+        except KeyboardInterrupt:
+            conn.close()
+            server.close()
+            sys.exit()
 
-conn.close()
-server.close()
+    conn.close()
+    server.close()

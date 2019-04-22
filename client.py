@@ -1,3 +1,4 @@
+# client.py
 """
     I'm thinking the client should be ran a single instance at a time, exiting and closing the socket after sending message and receiving validation or not
 """
@@ -301,7 +302,7 @@ def server_connect(port):
     connection = ('localhost', port)
     try:
         print('Connecting to server %s on port %s...' % connection)
-        server_connection.connect(connectiona)
+        server_connection.connect(connection)
     except:
         print('Connection failed, exiting...')
         server_connection.close()
@@ -320,8 +321,9 @@ def prepare_message(segmented_data):
 
 # send message to server
 def send_message(connection, message):
-    print('Sending message to %s' % connection.getpeername())
-    connection.send(message.encode('utf-8'))
+    print('Sending message...')
+    encoded = message.encode('utf-8')
+    connection.send(encoded)
 
 
 # receive server reply
@@ -341,6 +343,7 @@ if __name__ == '__main__':
 
     # create socket and connect to server
     server_connection = server_connect(int(args.port))
+    print('Connected to server...')
 
     # prepare message to be sent to server
     message = prepare_message(segmented_data)
