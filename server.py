@@ -22,6 +22,7 @@ def make_switch(message, size):
     random_int = random.random()
     bit_num = random.randint(1, size)
     if random_int < 0.5:
+        if message[bit_num] == '1':
             message[bit_num] = '0'
             print("Bit" + bit_num + " was flipped.")
     else:

@@ -351,3 +351,4 @@ if __name__ == '__main__':
     # send message to server and receive reply
     send_message(server_connection, message)
     reply = receive_reply(server_connection)
+    print(reply)
