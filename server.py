@@ -22,15 +22,11 @@ def setup_optparser(parser):
 def make_switch(message, size):
     message_array = [c for c in message]  # python str type cannot have individual chars replaced through indexing, conversion to a list is necessary
     random_int = random.random()
-    bit_num = random.randint(1, size)
+    bit_num = random.randint(0, size-1)
     if random_int < 0.5:
-
         if message_array[bit_num] == '1':
             message_array[bit_num] = '0'
-        else:
-            message_array[bit_num] = '1'
-
-        print("Bit", bit_num, "was flipped.")
+            print("Bit", bit_num, "was flipped.")
 
     else:
         print("No bits were flipped.")
@@ -169,11 +165,10 @@ def parity_2D(segmented_message, arg):
 
 # cyclic redundancy check
 def crc(message, arg):
-    message = '{0:b}'.format(message)
-
     try:
         divisor = int(arg, 2)  # will throw a ValueError if args.type[1] is not a binary string
-
+        remove_length = divisor.bit_length()
+        message = message[:-remove_length]
         # add polynomial length - 1 zeros to the end of message
         zeros = '0' * (len(arg) - 1)
         temp_message = message + zeros
@@ -220,6 +215,7 @@ def crc(message, arg):
 def checksum(segmented_message):
     # if the message is only one segment long, just flip it
     if len(segmented_message) < 2:
+        segmented_message = s[0:(len(s) - 1)]
         checksum = ones_complement(segmented_message[0])
     else:
         # iterate through the message and sum the binary values together
