@@ -27,6 +27,9 @@ def make_switch(message, size):
         if message_array[bit_num] == '1':
             message_array[bit_num] = '0'
             print("Bit", bit_num, "was flipped.")
+        else:
+            message_array[bit_num] = '1'
+            print("Bit", bit_num, "was flipped.")
 
     else:
         print("No bits were flipped.")
@@ -230,10 +233,15 @@ def checksum(segmented_message):
         checksum = '{0:b}'.format(sum)
         # one's complement the sum for the checksum
         checksum = ones_complement(checksum)
-
-    segmented_message.append(checksum)
-
-    return segmented_message
+        checksum = int(checksum, 2)
+        segmented_message.append(checksum)
+    if checksum == 0:
+        status = "Message was received correctly. Checksum is " + str(checksum)
+        print(status)
+    else:
+        status = "Message receiving failed. Checksum is " + str(checksum)
+        print(status)
+    return status
 
 
 def ones_complement(binary_string):
@@ -302,6 +310,7 @@ if __name__ == '__main__':
             print(message)
             size = message.__len__()
             message = make_switch(message, size)
+            print(message)
             if error_type == "parity1d":
                 segmented_message = segment(message, 9)  # parity1d works in 8-bit segments with a parity bit appended to the end, so 9 bits per segment
                 error_checked_message = parity_1D(segmented_message, error_arg)
@@ -316,10 +325,8 @@ if __name__ == '__main__':
                 error_checked_message = crc(message, error_arg)
                 reply = compare_messages(message, error_checked_message)
             else:
-                error_checked_message = checksum(segmented_message)
-                error_checked_message = unsegment(error_checked_message)
-                reply = compare_messages(message, error_checked_message)
-
+                segmented_message = segment(message, 8)
+                reply = checksum(segmented_message)
             reply = reply.encode('utf-8')
             conn.send(reply)
         except KeyboardInterrupt:
