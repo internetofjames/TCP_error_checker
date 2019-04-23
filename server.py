@@ -218,7 +218,6 @@ def crc(message, arg):
 def checksum(segmented_message):
     # if the message is only one segment long, just flip it
     if len(segmented_message) < 2:
-        segmented_message = s[0:(len(s) - 1)]
         checksum = ones_complement(segmented_message[0])
     else:
         # iterate through the message and sum the binary values together
@@ -234,12 +233,11 @@ def checksum(segmented_message):
         # one's complement the sum for the checksum
         checksum = ones_complement(checksum)
         checksum = int(checksum, 2)
-        segmented_message.append(checksum)
     if checksum == 0:
         status = "Message was received correctly. Checksum is " + str(checksum)
         print(status)
     else:
-        status = "Message receiving failed. Checksum is " + str(checksum)
+        status = "Message receiving failed. Checksum is {0:b}".format(checksum)
         print(status)
     return status
 
