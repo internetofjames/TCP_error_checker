@@ -244,7 +244,7 @@ def checksum(segmented_message):
         checksum = '{0:b}'.format(sum)
         # one's complement the sum for the checksum
         checksum = ones_complement(checksum)
-
+        print(checksum)
     segmented_message.append(checksum)
 
     return segmented_message

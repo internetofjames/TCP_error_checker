@@ -214,11 +214,9 @@ def crc(message, arg):
     return message
 
 
-# checksum, perhaps summing the message in 8-bit pieces?
 def checksum(segmented_message):
     # if the message is only one segment long, just flip it
     if len(segmented_message) < 2:
-        segmented_message = s[0:(len(s) - 1)]
         checksum = ones_complement(segmented_message[0])
     else:
         # iterate through the message and sum the binary values together
@@ -307,7 +305,6 @@ if __name__ == '__main__':
             message = received[0]
             error_type = received[1]
             error_arg = received[2]
-            print(message)
             size = message.__len__()
             message = make_switch(message, size)
             print(message)
