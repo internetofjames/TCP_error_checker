@@ -170,7 +170,7 @@ def parity_2D(segmented_message, arg):
 def crc(message, arg):
     try:
         divisor = int(arg, 2)  # will throw a ValueError if args.type[1] is not a binary string
-        remove_length = divisor.bit_length()
+        remove_length = divisor.bit_length()-1
         message = message[:-remove_length]
         # add polynomial length - 1 zeros to the end of message
         zeros = '0' * (len(arg) - 1)
@@ -214,11 +214,9 @@ def crc(message, arg):
     return message
 
 
-# checksum, perhaps summing the message in 8-bit pieces?
 def checksum(segmented_message):
     # if the message is only one segment long, just flip it
     if len(segmented_message) < 2:
-        segmented_message = s[0:(len(s) - 1)]
         checksum = ones_complement(segmented_message[0])
     else:
         # iterate through the message and sum the binary values together
@@ -234,12 +232,11 @@ def checksum(segmented_message):
         # one's complement the sum for the checksum
         checksum = ones_complement(checksum)
         checksum = int(checksum, 2)
-        segmented_message.append(checksum)
     if checksum == 0:
         status = "Message was received correctly. Checksum is " + str(checksum)
         print(status)
     else:
-        status = "Message receiving failed. Checksum is " + str(checksum)
+        status = "Message receiving failed. Checksum is {0:b}".format(checksum)
         print(status)
     return status
 
@@ -307,7 +304,6 @@ if __name__ == '__main__':
             message = received[0]
             error_type = received[1]
             error_arg = received[2]
-            print(message)
             size = message.__len__()
             message = make_switch(message, size)
             print(message)
