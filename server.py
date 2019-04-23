@@ -170,7 +170,7 @@ def parity_2D(segmented_message, arg):
 def crc(message, arg):
     try:
         divisor = int(arg, 2)  # will throw a ValueError if args.type[1] is not a binary string
-        remove_length = divisor.bit_length()
+        remove_length = divisor.bit_length()-1
         message = message[:-remove_length]
         # add polynomial length - 1 zeros to the end of message
         zeros = '0' * (len(arg) - 1)
