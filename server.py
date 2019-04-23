@@ -232,12 +232,11 @@ def checksum(segmented_message):
         # one's complement the sum for the checksum
         checksum = ones_complement(checksum)
         checksum = int(checksum, 2)
-        segmented_message.append(checksum)
     if checksum == 0:
         status = "Message was received correctly. Checksum is " + str(checksum)
         print(status)
     else:
-        status = "Message receiving failed. Checksum is " + str(checksum)
+        status = "Message receiving failed. Checksum is {0:b}".format(checksum)
         print(status)
     return status
 
