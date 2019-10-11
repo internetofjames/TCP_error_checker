@@ -1,10 +1,11 @@
-# client.py
-"""
-    I'm thinking the client should be ran a single instance at a time, exiting and closing the socket after sending message and receiving validation or not
+""" I'm thinking the client should be ran a single instance at a time, exiting and closing the socket after sending
+message and receiving validation or not
 """
 
-import socket, random
-import sys, argparse
+import argparse
+import random
+import socket
+import sys
 
 
 # function sets up the argparser arguments for the program
@@ -12,10 +13,11 @@ def setup_argparser(parser):
     # change required to true when socket connection function is project-ready
     parser.add_argument('-p', '--port', type=int, required=True, help='Usage: -p or --port <portNumber>')
     parser.add_argument('-b', '--bits', type=int, required=True, help='Usage: -b or --bits <numberOfBits>')
+    # type flag accepts two arguments, the name of the error check and a schema (i.e. parity1d even)
     parser.add_argument('-t', '--type',
                         type=str, nargs=2, required=True,
                         help='Usage: -t or --type <typeOfErrorCheck> <option>'
-                        ) # type flag accepts two arguments, the name of the error check and a schema (i.e. parity1d even)
+                        )
     args = parser.parse_args()
     return args
 
@@ -25,7 +27,7 @@ def generate_message(num_bits):
     return random.getrandbits(num_bits)
 
 
-""" Error check code generation functions """
+# Error check code generation functions
 
 
 # pass the segmented message list to the appropriate error checking function
@@ -133,12 +135,10 @@ def parity_2D(segmented_message):
         # add the parity bit to the end of each segment in the message
         segmented_message[index] += row_parity_bit_list[index]
 
-
     # create a list containing representations of each column of bits for the column check
     columns = [''.join(b) for b in zip(*segmented_message)]
 
-
-    # initiallize a string to store these bits since it will just be appended to the end of the segmented message
+    # initialize a string to store these bits since it will just be appended to the end of the segmented message
     column_parity_bits = ''
 
     # perform the parity check on the columns
@@ -210,7 +210,8 @@ def crc(message):
             if len(remainder) <= len(zeros):
                 stop_condition = True
 
-        # if the remainder has leading 0's, python automatically omits those, so we need to re-prepend them to the crc code
+        # if the remainder has leading 0's, python automatically omits those, so we need to re-prepend
+        # them to the crc code
         if len(remainder) < len(zeros):
             leading_zeros = '0' * (len(zeros) - len(remainder))
             remainder = leading_zeros + remainder
@@ -231,6 +232,7 @@ def checksum(segmented_message):
     # if the message is only one segment long, just flip it
     if len(segmented_message) < 2:
         checksum = ones_complement(segmented_message[0])
+
     else:
         # iterate through the message and sum the binary values together
         sum = int(segmented_message[0], 2)
@@ -250,7 +252,7 @@ def checksum(segmented_message):
     return segmented_message
 
 
-""" Message processing and printing functions """
+# Message processing and printing functions
 
 # break up the message into a list of 8 bit binary string segments for processing
 def segment(message):
@@ -294,16 +296,18 @@ def print_message(segmented_message):
     print()
 
 
-""" Server communication functions """
+# Server communication functions
 # implement functions for connecting to, sending data, and receiving data from the server here
 
 # connect to the socket that the server is running on
 def server_connect(port):
     server_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connection = ('localhost', port)
+
     try:
         print('Connecting to server %s on port %s...' % connection)
         server_connection.connect(connection)
+
     except:
         print('Connection failed, exiting...')
         server_connection.close()
