@@ -1,12 +1,12 @@
-# server.py
-"""
-    For here, the server will run in a loop, processing requests one at a time, receive the message, perform the error
-    check, and tell the client if the message was received successfully or not while printing out the results to its
-    own terminal window. After that all works, we can implement an argument that will enable a occasional bit flipping.
+""" For here, the server will run in a loop, processing requests one at a time, receive the message, perform the error
+check, and tell the client if the message was received successfully or not while printing out the results to its
+own terminal window. After that all works, we can implement an argument that will enable a occasional bit flipping.
 """
 
-import socket, sys, random
 import optparse
+import random
+import socket
+import sys
 
 
 # function sets up the OptionParser option for the program
@@ -20,7 +20,8 @@ def setup_optparser(parser):
 
 # function to randomly flip a bit in the message
 def make_switch(message, size):
-    message_array = [c for c in message]  # python str type cannot have individual chars replaced through indexing, conversion to a list is necessary
+    # python str type cannot have individual chars replaced through indexing, conversion to a list is necessary
+    message_array = [c for c in message]
     random_int = random.random()
     bit_num = random.randint(0, size-1)
     if random_int < 0.5:
@@ -199,7 +200,8 @@ def crc(message, arg):
             if len(remainder) <= len(zeros):
                 stop_condition = True
 
-        # if the remainder has leading 0's, python automatically omits those, so we need to re-prepend them to the crc code
+        # if the remainder has leading 0's, python automatically omits those, so we need to re-prepend
+        # them to the crc code
         if len(remainder) < len(zeros):
             leading_zeros = '0' * (len(zeros) - len(remainder))
             remainder = leading_zeros + remainder
@@ -274,6 +276,7 @@ def segment(message, segment_size):
     # create a list of segment_size bit segments of the message, in order
     segment_list = ([message[n:n + segment_size] for n in range(0, len(message), segment_size)])
     return segment_list
+
 
 # reassemble message segments into continuous string
 def unsegment(segmented_message):
